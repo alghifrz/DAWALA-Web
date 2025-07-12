@@ -10,6 +10,151 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model Paket_Wisata {
+  id_paket_wisata    String               @id @default(uuid()) @map("id_paket_wisata")
+  nama_paket         String
+  deskripsi          String
+  durasi             String
+  harga              Int
+  fasilitas          String[]
+  poin_edukasi       String[]
+  foto               String
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  pemesanan          Pemesanan[]
+  rantai_pasok_hijau Rantai_Pasok_Hijau[]
+
+  @@map("paket_wisata")
+}
+
+model Jenis {
+  id_jenis   String    @id @default(uuid()) @map("id_jenis")
+  nama       String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  kuliner    Kuliner[]
+
+  @@map("jenis")
+}
+
+model Lokasi {
+  id_lokasi     String          @id @default(uuid()) @map("id_lokasi")
+  nama          String
+  latitude      Float
+  longitude     Float
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  homestay      Homestay[]
+  kuliner       Kuliner[]
+  tempat_ibadah Tempat_Ibadah[]
+
+  @@map("lokasi")
+}
+
+model Kuliner {
+  id_kuliner String        @id @default(uuid()) @map("id_kuliner")
+  nama       String
+  deskripsi  String
+  status     StatusKuliner
+  jam_buka   String
+  foto       String
+  id_jenis   String        @map("id_jenis")
+  id_alamat  String        @map("id_alamat")
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  alamat     Lokasi        @relation(fields: [id_alamat], references: [id_lokasi], onDelete: Cascade)
+  jenis      Jenis         @relation(fields: [id_jenis], references: [id_jenis], onDelete: Cascade)
+
+  @@map("kuliner")
+}
+
+model Tempat_Ibadah {
+  id_tempat_ibadah String   @id @default(uuid()) @map("id_tempat_ibadah")
+  nama             String
+  jam_buka         String
+  fasilitas        String[]
+  id_alamat        String   @map("id_alamat")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  alamat           Lokasi   @relation(fields: [id_alamat], references: [id_lokasi], onDelete: Cascade)
+
+  @@map("tempat_ibadah")
+}
+
+model Homestay {
+  id_homestay        String               @id @default(uuid()) @map("id_homestay")
+  nama               String
+  deskripsi          String
+  harga              Int
+  kontak             String
+  foto               String
+  id_alamat          String               @map("id_alamat")
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  fasilitas_homestay Fasilitas_Homestay[]
+  alamat             Lokasi               @relation(fields: [id_alamat], references: [id_lokasi], onDelete: Cascade)
+
+  @@map("homestay")
+}
+
+model Fasilitas_Muslim {
+  id_fasilitas_muslim String               @id @default(uuid()) @map("id_fasilitas_muslim")
+  nama                String
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  fasilitas_homestay  Fasilitas_Homestay[]
+
+  @@map("fasilitas_muslim")
+}
+
+model Fasilitas_Homestay {
+  id_fasilitas_homestay String           @id @default(uuid()) @map("id_fasilitas_homestay")
+  id_homestay           String           @map("id_homestay")
+  id_fasilitas_muslim   String           @map("id_fasilitas_muslim")
+  created_at            DateTime         @default(now())
+  fasilitas_muslim      Fasilitas_Muslim @relation(fields: [id_fasilitas_muslim], references: [id_fasilitas_muslim], onDelete: Cascade)
+  homestay              Homestay         @relation(fields: [id_homestay], references: [id_homestay], onDelete: Cascade)
+
+  @@unique([id_homestay, id_fasilitas_muslim])
+  @@map("fasilitas_homestay")
+}
+
+model Rantai_Pasok_Hijau {
+  id_rantai_pasok_hijau String       @id @default(uuid()) @map("id_rantai_pasok_hijau")
+  konten                String
+  id_paket_wisata       String       @map("id_paket_wisata")
+  created_at            DateTime     @default(now())
+  updated_at            DateTime     @updatedAt
+  paket_wisata          Paket_Wisata @relation(fields: [id_paket_wisata], references: [id_paket_wisata], onDelete: Cascade)
+
+  @@map("rantai_pasok_hijau")
+}
+
+model Pemesanan {
+  id_pemesanan      String          @id @default(uuid()) @map("id_pemesanan")
+  id_paket_wisata   String          @map("id_paket_wisata")
+  user_id           String          @map("user_id")
+  tanggal_pemesanan DateTime
+  status_pemesanan  StatusPemesanan
+  catatan_opsional  String?
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  paket_wisata      Paket_Wisata    @relation(fields: [id_paket_wisata], references: [id_paket_wisata], onDelete: Cascade)
+
+  @@map("pemesanan")
+}
+
+enum StatusKuliner {
+  halal
+  haram
+}
+
+enum StatusPemesanan {
+  pending
+  confirmed
+  cancelled
 }

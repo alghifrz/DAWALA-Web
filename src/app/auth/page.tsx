@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CheckSessionRedirect from './_checkSession';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -67,57 +68,60 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
-        <h2 className="text-2xl font-bold text-center mb-6">{isLogin ? 'Login' : 'Registrasi'}</h2>
-        <button
-          onClick={handleGoogleAuth}
-          disabled={loading}
-          className="w-full py-2 rounded-md border border-gray-300 bg-white mb-4 font-medium hover:bg-gray-50 transition"
-        >
-          {loading ? 'Loading...' : 'Lanjutkan dengan Google'}
-        </button>
-        <div className="text-center my-3 text-gray-400">atau</div>
-        <form onSubmit={handleEmailAuth}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            className="w-full py-2 px-3 mb-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            className="w-full py-2 px-3 mb-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
+    <>
+      <CheckSessionRedirect />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
+          <h2 className="text-2xl font-bold text-center mb-6">{isLogin ? 'Login' : 'Registrasi'}</h2>
           <button
-            type="submit"
+            onClick={handleGoogleAuth}
             disabled={loading}
-            className="w-full py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 transition mb-2"
+            className="w-full py-2 rounded-md border border-gray-300 bg-white mb-4 font-medium hover:bg-gray-50 transition"
           >
-            {loading ? 'Loading...' : isLogin ? 'Login' : 'Registrasi'}
+            {loading ? 'Loading...' : 'Lanjutkan dengan Google'}
           </button>
-        </form>
-        <div className="text-center mt-2">
-          <span>{isLogin ? 'Belum punya akun?' : 'Sudah punya akun?'}</span>
-          <button
-            onClick={() => { setIsLogin(!isLogin); resetForm(); }}
-            className="ml-2 text-blue-600 hover:underline font-medium"
-          >
-            {isLogin ? 'Registrasi' : 'Login'}
-          </button>
-        </div>
-        {message && (
-          <div className={`mt-4 p-3 rounded-md text-center font-medium ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {message}
+          <div className="text-center my-3 text-gray-400">atau</div>
+          <form onSubmit={handleEmailAuth}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              className="w-full py-2 px-3 mb-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              className="w-full py-2 px-3 mb-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 transition mb-2"
+            >
+              {loading ? 'Loading...' : isLogin ? 'Login' : 'Registrasi'}
+            </button>
+          </form>
+          <div className="text-center mt-2">
+            <span>{isLogin ? 'Belum punya akun?' : 'Sudah punya akun?'}</span>
+            <button
+              onClick={() => { setIsLogin(!isLogin); resetForm(); }}
+              className="ml-2 text-blue-600 hover:underline font-medium"
+            >
+              {isLogin ? 'Registrasi' : 'Login'}
+            </button>
           </div>
-        )}
+          {message && (
+            <div className={`mt-4 p-3 rounded-md text-center font-medium ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {message}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
-} 
+}
