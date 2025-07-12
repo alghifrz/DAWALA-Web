@@ -36,17 +36,27 @@ export default function KulinerPage() {
         .from('kuliner')
         .select('id_kuliner, nama, deskripsi, status, jam_buka, foto, id_jenis, lokasi');
       if (jenis) query = query.eq('id_jenis', jenis);
-      if (lokasi) query = query.eq('lokasi', lokasi);
+      if (lokasi) {
+        // Coba filter berdasarkan nama lokasi langsung atau ID
+        const selectedLokasi = lokasiList.find(l => l.id === lokasi);
+        if (selectedLokasi) {
+          query = query.or(`lokasi.eq.${lokasi},lokasi.eq.${selectedLokasi.nama}`);
+        } else {
+          query = query.eq('lokasi', lokasi);
+        }
+      }
       if (search) query = query.ilike('nama', `%${search}%`);
       const { data, error } = await query;
       setRawData(data); // debug
       if (!error && data) {
+        console.log('Data kuliner:', data); // Debug log
+        console.log('Lokasi list:', lokasiList); // Debug log
         setData(data as Kuliner[]);
       }
       setLoading(false);
     };
     fetchData();
-  }, [jenis, lokasi, search]);
+  }, [jenis, lokasi, search, lokasiList]);
 
   useEffect(() => {
     // Fetch jenis & lokasi list for filter
@@ -61,7 +71,26 @@ export default function KulinerPage() {
 
   // Helper untuk dapatkan nama jenis/lokasi dari id
   const getJenisNama = (id: string) => jenisList.find(j => j.id === id)?.nama || '-';
-  const getLokasiNama = (id: string) => lokasiList.find(l => l.id === id)?.nama || '-';
+  const getLokasiNama = (lokasi: string) => {
+    // Jika lokasi kosong atau null, return default
+    if (!lokasi || lokasi.trim() === '') {
+      return '-';
+    }
+    
+    // Jika lokasi sudah berupa string nama yang valid (bukan ID), return as is
+    if (lokasi && !lokasi.includes('-') && lokasi.length > 2) {
+      return lokasi;
+    }
+    
+    // Jika lokasi adalah ID (format seperti id_lokasi), cari di lokasiList
+    const foundLokasi = lokasiList.find(l => l.id === lokasi);
+    if (foundLokasi) {
+      return foundLokasi.nama;
+    }
+    
+    // Fallback: return original value
+    return lokasi;
+  };
 
   // Modal close
   const closeModal = () => { setSelected(null); setFotoIdx(0); };
@@ -193,6 +222,7 @@ export default function KulinerPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                         {getLokasiNama(item.lokasi)}
+                        <span className="text-xs text-red-500 ml-2">({item.lokasi})</span>
                       </div>
                       <div className="flex items-center text-gray-500">
                         <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,6 +333,7 @@ export default function KulinerPage() {
                   </svg>
                   <span className="font-medium">Lokasi:</span>
                   <span className="ml-2">{getLokasiNama(selected.lokasi)}</span>
+                  <span className="text-xs text-red-500 ml-2">({selected.lokasi})</span>
                 </div>
                 <div className="flex items-center text-gray-600">
                   <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
