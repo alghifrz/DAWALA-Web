@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 const navLinks = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Beranda" },
   { href: "/dashboard/kuliner", label: "Kuliner Halal" },
   { href: "/dashboard/tempat-ibadah", label: "Tempat Ibadah" },
   { href: "/dashboard/homestay", label: "Homestay" },
@@ -35,7 +35,7 @@ export default function Navbar() {
 
   return (
     <nav className="w-full bg-white/80 dark:bg-gray-900/80 shadow-sm sticky top-0 z-50 backdrop-blur">
-      <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
         <Link href="/" className="text-xl font-bold text-green-700 tracking-tight">
           Dawala
         </Link>
@@ -53,22 +53,22 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          {user ? (
-            <button
-              onClick={handleLogout}
-              className="ml-2 px-4 py-1.5 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition text-sm"
-            >
-              Logout
-            </button>
-          ) : (
-            <Link
-              href="/auth"
-              className="ml-2 px-4 py-1.5 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition text-sm"
-            >
-              Login
-            </Link>
-          )}
         </div>
+        {user ? (
+          <button
+            onClick={handleLogout}
+            className="ml-2 px-4 py-1.5 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition text-sm"
+          >
+            Keluar
+          </button>
+        ) : (
+          <Link
+            href="/auth"
+            className="ml-2 px-4 py-1.5 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition text-sm"
+          >
+            Masuk
+          </Link>
+        )}
       </div>
     </nav>
   );
