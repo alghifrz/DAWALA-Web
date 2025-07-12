@@ -11,7 +11,7 @@ const navLinks = [
   { href: "/dashboard/homestay", label: "Homestay" },
   { href: "/dashboard/paket-wisata", label: "Paket Wisata" },
   { href: "/dashboard/edukasi", label: "Edukasi" },
-  { href: "/dashboard/pemesanan-saya", label: "Pemesanan Saya" },
+  { href: "/dashboard/pemesanan", label: "Pemesanan" },
 ];
 
 export default function Navbar() {

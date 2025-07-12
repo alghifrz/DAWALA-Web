@@ -128,34 +128,48 @@ export default function KulinerPage() {
                 placeholder="Cari nama kuliner..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all"
+                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Kuliner</label>
-              <select
-                value={jenis}
-                onChange={e => setJenis(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all"
-              >
-                <option value="">Semua Jenis</option>
-                {jenisList.map((j) => (
-                  <option key={j.id} value={j.id}>{j.nama}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={jenis}
+                  onChange={e => setJenis(e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all appearance-none bg-white"
+                >
+                  <option value="">Semua Jenis</option>
+                  {jenisList.map((j) => (
+                    <option key={j.id} value={j.id}>{j.nama}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Lokasi</label>
-              <select
-                value={lokasi}
-                onChange={e => setLokasi(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all"
-              >
-                <option value="">Semua Lokasi</option>
-                {lokasiList.map((l) => (
-                  <option key={l.id} value={l.id}>{l.nama}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={lokasi}
+                  onChange={e => setLokasi(e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all appearance-none bg-white"
+                >
+                  <option value="">Semua Lokasi</option>
+                  {lokasiList.map((l) => (
+                    <option key={l.id} value={l.id}>{l.nama}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </div>
