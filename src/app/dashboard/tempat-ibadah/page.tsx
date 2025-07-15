@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
+
 interface TempatIbadah {
   id_tempat_ibadah: string;
   nama: string;
@@ -10,41 +11,86 @@ interface TempatIbadah {
   lokasi: string;
 }
 interface Lokasi { id: string; nama: string; }
+interface Fasilitas { id: string; nama: string; }
 
 export default function TempatIbadahPage() {
   const [data, setData] = useState<TempatIbadah[]>([]);
+  const [showFasilitasDropdown, setShowFasilitasDropdown] = useState(false); // State untuk dropdown custom fasilitas
+
+  // Tutup dropdown fasilitas jika klik di luar
+  useEffect(() => {
+    if (!showFasilitasDropdown) return;
+    function handleClick(e: MouseEvent) {
+      const dropdown = document.getElementById('fasilitas-dropdown');
+      if (dropdown && !dropdown.contains(e.target as Node)) {
+        setShowFasilitasDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showFasilitasDropdown]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [lokasi, setLokasi] = useState('');
   const [lokasiList, setLokasiList] = useState<Lokasi[]>([]);
   const [rawData, setRawData] = useState<any>(null);
   const [selected, setSelected] = useState<TempatIbadah | null>(null);
+  const [fasilitasList, setFasilitasList] = useState<Fasilitas[]>([]);
+  const [fasilitasFilter, setFasilitasFilter] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      let query = supabase
+      // Query tempat_ibadah + join fasilitas
+      let base = supabase
         .from('tempat_ibadah')
-        .select('id_tempat_ibadah, nama, jam_buka, fasilitas, lokasi');
-      if (lokasi) query = query.eq('lokasi', lokasi);
-      if (search) query = query.ilike('nama', `%${search}%`);
-      const { data, error } = await query;
+        .select(`id_tempat_ibadah, nama, jam_buka, lokasi, tempat_ibadah_fasilitas:fasilitas_tempat_ibadah(id_fasilitas_tempat_ibadah, fasilitas_tempat_ibadah: nama)`);
+      if (lokasi) base = base.eq('lokasi', lokasi);
+      if (search) base = base.ilike('nama', `%${search}%`);
+      const { data, error } = await base;
+      let result: TempatIbadah[] = [];
+      if (!error && data) {
+        result = (data as any[]).map((item) => ({
+          id_tempat_ibadah: item.id_tempat_ibadah,
+          nama: item.nama,
+          jam_buka: item.jam_buka,
+          lokasi: item.lokasi,
+          fasilitas: (item.tempat_ibadah_fasilitas || []).map((f: any) => f.fasilitas_tempat_ibadah),
+        }));
+        // Filter by fasilitas jika ada
+        if (fasilitasFilter.length > 0) {
+          result = result.filter((t) => fasilitasFilter.every(f => t.fasilitas.includes(f)));
+        }
+      }
       setRawData(data);
-      if (!error && data) setData(data as TempatIbadah[]);
+      setData(result);
       setLoading(false);
     };
     fetchData();
-  }, [lokasi, search]);
+  }, [lokasi, search, fasilitasFilter]);
 
   useEffect(() => {
     const fetchLokasi = async () => {
       const { data: lokasiData } = await supabase.from('lokasi').select('id_lokasi, nama');
       setLokasiList(lokasiData?.map((l: any) => ({ id: l.id_lokasi, nama: l.nama })) || []);
     };
+    const fetchFasilitas = async () => {
+      const { data: fasilitasData } = await supabase.from('fasilitas_tempat_ibadah').select('id_fasilitas_tempat_ibadah, nama');
+      setFasilitasList(fasilitasData?.map((f: any) => ({ id: f.nama, nama: f.nama })) || []);
+    };
     fetchLokasi();
+    fetchFasilitas();
   }, []);
 
-  const getLokasiNama = (id: string) => lokasiList.find(l => l.id === id)?.nama || '-';
+  // Jika lokasi berupa nama langsung (bukan id), tampilkan stringnya
+  const getLokasiNama = (lokasi: string) => {
+    // Jika lokasi ditemukan di list id, tampilkan nama dari list
+    const found = lokasiList.find(l => l.id === lokasi);
+    if (found) return found.nama;
+    // Jika lokasi string dan bukan id, tampilkan langsung
+    if (typeof lokasi === 'string' && lokasi.length > 0) return lokasi;
+    return '-';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-6">
@@ -71,7 +117,7 @@ export default function TempatIbadahPage() {
             </svg>
             Cari & Filter
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Nama Tempat Ibadah</label>
               <input
@@ -88,18 +134,62 @@ export default function TempatIbadahPage() {
                 <select
                   value={lokasi}
                   onChange={e => setLokasi(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all appearance-none bg-white"
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 pr-4 focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all appearance-none bg-white"
                 >
                   <option value="">Semua Lokasi</option>
                   {lokasiList.map((l) => (
                     <option key={l.id} value={l.id}>{l.nama}</option>
                   ))}
                 </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
                   </svg>
                 </div>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fasilitas</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 pr-4 text-left bg-white focus:ring-2 focus:ring-green-300 focus:border-green-400 transition-all flex items-center justify-between"
+                  onClick={() => setShowFasilitasDropdown(v => !v)}
+                >
+                  <span className="truncate text-gray-700">
+                    {fasilitasFilter.length === 0
+                      ? 'Pilih fasilitas...'
+                      : fasilitasList.filter(f => fasilitasFilter.includes(f.nama)).map(f => f.nama).join(', ')}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-400 ml-2 mr-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                {showFasilitasDropdown && (
+                  <div id="fasilitas-dropdown" className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                    {fasilitasList.length === 0 && (
+                      <div className="p-3 text-gray-400 text-sm">Tidak ada data fasilitas</div>
+                    )}
+                    {fasilitasList.map((f) => (
+                      <label key={f.id} className="flex items-center px-3 py-2 hover:bg-green-50 cursor-pointer gap-2">
+                        <input
+                          type="checkbox"
+                          checked={fasilitasFilter.includes(f.nama)}
+                          onChange={e => {
+                            if (e.target.checked) {
+                              setFasilitasFilter([...fasilitasFilter, f.nama]);
+                            } else {
+                              setFasilitasFilter(fasilitasFilter.filter(val => val !== f.nama));
+                            }
+                          }}
+                          className="accent-green-600 rounded mr-2"
+                        />
+                        <span className="text-gray-700 text-sm">{f.nama}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <div className="text-xs text-gray-400 mt-1">(Pilih lebih dari satu untuk filter kombinasi)</div>
               </div>
             </div>
           </div>
@@ -182,12 +272,14 @@ export default function TempatIbadahPage() {
 
       {/* Modal detail tempat ibadah */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative" onClick={e => e.stopPropagation()}>
             <div className="relative bg-green-600 h-32 rounded-t-2xl">
-              <button 
-                onClick={() => setSelected(null)} 
-                className="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 text-gray-600 hover:text-red-500 transition-all"
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 text-gray-600 hover:text-red-500 transition-all z-10"
+                aria-label="Tutup"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -201,10 +293,8 @@ export default function TempatIbadahPage() {
                 </div>
               </div>
             </div>
-            
             <div className="p-6">
               <h3 className="font-bold text-2xl mb-4 text-green-900">{selected.nama}</h3>
-              
               <div className="space-y-3">
                 <div className="flex items-center text-gray-600">
                   <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +333,6 @@ export default function TempatIbadahPage() {
           </div>
         </div>
       )}
-      
       {rawData && (
         <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-800">Debug Data</h3>
